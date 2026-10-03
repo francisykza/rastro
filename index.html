@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rastro en vivo</title>
+<meta name="description" content="Demo en vivo de Rastro: auditoría de devoluciones en Google Sheets con Apps Script. Datos ficticios.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cg fill='%23F5A524'%3E%3Cellipse cx='10' cy='13' rx='5' ry='4.2'/%3E%3Ccircle cx='4' cy='7.5' r='2'/%3E%3Ccircle cx='8' cy='4.2' r='2'/%3E%3Ccircle cx='12.5' cy='4.2' r='2'/%3E%3Ccircle cx='16.3' cy='7.5' r='2'/%3E%3C/g%3E%3C/svg%3E">
+<style>
+  :root{--noche:#1B2636;--noche2:#26354A;--ambar:#F5A524;--ambar2:#E07A1F;--borde:#E1E5EA;--gris:#5F6B7A;--fondo:#F8F9FA;--sel:#1A73E8}
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#202124;background:#fff;display:flex;flex-direction:column;overflow:hidden}
+  button{font-family:inherit}
+  .demo-banda{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--noche);color:#fff;padding:8px 14px;font-size:13px}
+  .demo-banda .marca{font-weight:800;font-size:16px;letter-spacing:.3px}.demo-banda .marca b{color:var(--ambar)}
+  .demo-banda .aviso{color:#C9D4E3}
+  .demo-banda .der{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .demo-banda select,.demo-banda button{border:1px solid #3E5272;background:var(--noche2);color:#fff;border-radius:8px;padding:5px 9px;font-size:12.5px;cursor:pointer}
+  .demo-banda button.amb{background:var(--ambar);color:#3A2105;border-color:var(--ambar);font-weight:700}
+  .doc{display:flex;align-items:center;gap:12px;padding:6px 14px 0}
+  .doc .icono{width:28px;height:36px;border-radius:4px;background:#0F9D58;display:grid;place-items:center}
+  .doc .titulo{font-size:17px}
+  #menus{display:flex;gap:2px;padding:0 12px 4px 52px;min-height:30px;align-items:center;font-size:14px}
+  .menu-fijo{padding:4px 8px;color:#444;border-radius:4px}
+  .menu{position:relative}
+  .menu-b{border:0;background:none;padding:4px 8px;border-radius:4px;font-size:14px;cursor:pointer;color:#202124}
+  .menu-b:hover,.menu.abierto .menu-b{background:#E8EAED}
+  .menu-l{display:none;position:absolute;top:100%;left:0;z-index:30;background:#fff;border-radius:6px;box-shadow:0 4px 18px rgba(0,0,0,.18);padding:6px 0;min-width:300px}
+  .menu.abierto .menu-l{display:block}
+  .menu-l button{display:block;width:100%;text-align:left;border:0;background:none;padding:7px 18px;font-size:13.5px;cursor:pointer}
+  .menu-l button:hover{background:#F1F3F4}
+  .menu-l hr{border:0;border-top:1px solid #E8EAED;margin:5px 0}
+  .barra-celda{display:flex;border-top:1px solid var(--borde);border-bottom:1px solid var(--borde);font-size:13px;height:28px;align-items:center}
+  #ref-celda{width:90px;text-align:center;border-right:1px solid var(--borde);color:#444}
+  #valor-celda{padding:0 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#333}
+  .cuerpo{flex:1;display:flex;min-height:0}
+  .zona-hoja{flex:1;display:flex;flex-direction:column;min-width:0;position:relative}
+  #rejilla{flex:1;overflow:auto;position:relative;outline:none;background:#fff}
+  #lienzo{position:relative}
+  .fila{position:absolute;left:0;height:24px;display:flex;font-size:12.5px}
+  .fila .n{position:sticky;left:0;z-index:2;width:46px;flex:none;background:var(--fondo);border-right:1px solid #D0D4D9;border-bottom:1px solid #E8EAED;color:#5F6368;text-align:center;line-height:23px;font-size:11px}
+  .fila .n.on{background:#D3E3FD;color:#0B57D0;font-weight:600}
+  .fila .c{flex:none;border-right:1px solid #E8EAED;border-bottom:1px solid #E8EAED;padding:0 5px;line-height:23px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:relative;cursor:cell}
+  .fila .c.num{text-align:right}
+  .fila.tit .c{font-weight:700;background:#F3F6FA}
+  .fila.cab{z-index:5}
+  .fila.cab .c,.fila.cab .n{background:var(--fondo);color:#5F6368;text-align:center;font-size:11px;font-weight:500;border-bottom:1px solid #D0D4D9}
+  .c.sel{outline:2px solid var(--sel);outline-offset:-2px;z-index:1}
+  .c.flash{animation:flash 1.4s ease-out}
+  @keyframes flash{0%,40%{background:#FDE68A}100%{}}
+  .editor{position:absolute;inset:0;width:100%;height:100%;border:2px solid var(--sel);font:inherit;padding:0 4px;outline:none;background:#fff;z-index:4}
+  #pestanas{display:flex;gap:2px;align-items:center;background:var(--fondo);border-top:1px solid var(--borde);padding:4px 10px;min-height:38px;overflow-x:auto}
+  .pest{border:0;background:none;padding:6px 14px;border-radius:6px 6px 0 0;font-size:13px;cursor:pointer;color:#444}
+  .pest.on{background:#fff;color:#0B57D0;font-weight:600;box-shadow:0 -2px 0 #0B57D0 inset}
+  .pest-ocultas{font-size:11.5px;color:#80868B;margin-left:8px;white-space:nowrap}
+  #barra{width:300px;flex:none;border-left:1px solid var(--borde);display:none;flex-direction:column;background:#fff}
+  body.con-barra #barra{display:flex}
+  .barra-cab{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;font-size:15px;border-bottom:1px solid var(--borde)}
+  .barra-cab button,.ventana-cab button{border:0;background:none;font-size:18px;cursor:pointer;color:#5F6368;padding:2px 6px;border-radius:50%}
+  #barra-marco{flex:1;border:0;width:300px}
+  #ventana{position:fixed;inset:0;background:rgba(32,33,36,.55);display:none;align-items:center;justify-content:center;z-index:50}
+  #ventana.ver{display:flex}
+  #ventana-caja{background:#fff;border-radius:8px;box-shadow:0 12px 40px rgba(0,0,0,.35);display:flex;flex-direction:column;max-width:calc(100vw - 24px);max-height:calc(100vh - 24px)}
+  .ventana-cab{display:flex;align-items:center;justify-content:space-between;padding:10px 14px 6px 22px;font-size:17px}
+  #ventana-marco{flex:1;border:0;width:100%}
+  #toast{position:fixed;left:24px;bottom:56px;z-index:60;background:#323232;color:#fff;border-radius:6px;padding:12px 40px 12px 16px;max-width:420px;font-size:13.5px;box-shadow:0 4px 14px rgba(0,0,0,.3);display:none;flex-direction:column;gap:3px}
+  #toast.ver{display:flex}
+  #toast button{position:absolute;right:8px;top:8px;border:0;background:none;color:#bbb;cursor:pointer}
+  #guia{position:fixed;top:70px;right:316px;z-index:40;width:340px;background:#fff;border:1px solid var(--borde);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.18);padding:14px 16px;font-size:13.5px;line-height:1.5;display:none}
+  #guia.ver{display:block}
+  #guia h3{margin:0 0 6px;font-size:15px}
+  #guia ol{margin:6px 0 0;padding-left:20px}
+  #guia li{margin-bottom:5px}
+  #guia .cerrar{position:absolute;top:8px;right:10px;border:0;background:none;font-size:16px;cursor:pointer}
+  .cargando{position:fixed;inset:0;display:grid;place-items:center;background:#fff;z-index:100;font-size:15px;color:var(--gris)}
+  body.listo .cargando{display:none}
+  @media (max-width:820px){
+    body{overflow:auto;height:auto;min-height:100%}
+    .cuerpo{flex:none;flex-direction:column-reverse}
+    #barra{width:100%;height:78vh;border-left:0;border-bottom:1px solid var(--borde)}
+    #barra-marco{width:100%}
+    .zona-hoja{height:70vh;flex:none}
+    .barra-celda{display:none}
+    #menus{padding-left:12px}
+    .doc .titulo{font-size:15px}
+    #guia{right:12px;left:12px;width:auto}
+    .demo-banda .aviso{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="cargando">Preparando la demo…</div>
+<div class="demo-banda">
+  <span class="marca">Ras<b>tro</b></span>
+  <span class="aviso">Demo en vivo · todos los datos son ficticios · nada sale de tu navegador</span>
+  <div class="der">
+    <label>Ver como
+      <select id="como" aria-label="Ver la hoja como">
+        <option value="admin@ejemplo.com">Administración</option>
+        <option value="ana.soler@ejemplo.com">Ana (equipo)</option>
+        <option value="invitado@ejemplo.com">Otra persona (sin permiso)</option>
+      </select>
+    </label>
+    <button id="ayuda" class="amb">Qué probar</button>
+    <button id="reiniciar">Reiniciar</button>
+  </div>
+</div>
+<div class="doc"><div class="icono" aria-hidden="true"><svg width="18" height="22" viewBox="0 0 18 22"><rect x="3" y="6" width="12" height="11" fill="none" stroke="#fff" stroke-width="1.6"/><path d="M3 11.5h12M9 6v11" stroke="#fff" stroke-width="1.6"/></svg></div><span class="titulo">Devoluciones (demo)</span></div>
+<div id="menus" role="menubar"></div>
+<div class="barra-celda"><span id="ref-celda">C2</span><span id="valor-celda"></span></div>
+<div class="cuerpo">
+  <div class="zona-hoja">
+    <div id="rejilla" tabindex="0" aria-label="Hoja de cálculo"><div id="lienzo"></div></div>
+    <div id="pestanas"></div>
+  </div>
+  <aside id="barra" aria-label="Barra lateral">
+    <div class="barra-cab"><span id="barra-titulo"></span><button id="barra-cerrar" aria-label="Cerrar barra lateral">✕</button></div>
+    <iframe id="barra-marco" title="Barra lateral"></iframe>
+  </aside>
+</div>
+<div id="ventana" role="dialog" aria-modal="true"><div id="ventana-caja"><div class="ventana-cab"><span id="ventana-titulo"></span><button id="ventana-cerrar" aria-label="Cerrar">✕</button></div><iframe id="ventana-marco" title="Ventana"></iframe></div></div>
+<div id="toast" role="status"></div>
+<div id="guia">
+  <button class="cerrar" id="guia-cerrar" aria-label="Cerrar">✕</button>
+  <h3>Qué probar</h3>
+  <ol>
+    <li>Pulsa a <b>Rufo</b> en la barra lateral para despertarlo.</li>
+    <li><b>Buscar referencia</b>: copia un nº de pedido de la columna C de Entradas y búscalo; cambia un número para ver las «parecidas». Desde el resultado, <b>Rellenar</b> marca OK o RECLAMAR sin ir a la hoja.</li>
+    <li>Escribe en la hoja: una agencia en la columna B, <b>SI</b> en E o <b>OK</b> en L. Sale «✅ Registrado» y el Recuento y el Calendario lo cuentan.</li>
+    <li>Menú <b>📦 Devoluciones → Calendario de agencias</b>: la semana por agencia y el checklist para el correo.</li>
+    <li><b>Retornos</b>: busca un cliente o un artículo aunque lo escribas mal.</li>
+    <li><b>Notas</b>: contraseña <code>demo</code>.</li>
+    <li>Arriba, <b>Ver como → Otra persona</b>: así lo ve alguien sin permiso.</li>
+  </ol>
+</div>
+<script src="gas-mock.js"></script>
+<script src="archivos.js"></script>
+<script src="motor.js"></script>
+<script src="datos-demo.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
