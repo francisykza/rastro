@@ -75,31 +75,31 @@
   #guia .cerrar{position:absolute;top:8px;right:10px;border:0;background:none;font-size:16px;cursor:pointer}
   .cargando{position:fixed;inset:0;display:grid;place-items:center;background:#fff;z-index:100;font-size:15px;color:var(--gris)}
   body.listo .cargando{display:none}
-  #vistas{display:none}
+  #asa,#barra-plegar{display:none}
   @media (max-width:820px){
-    /* Móvil: como una app, dos pestañas fijas abajo (Rufo / Hoja), cada una a pantalla completa. */
     .demo-banda{padding:6px 12px;gap:6px}
     .demo-banda .aviso,.demo-banda label>span{display:none}
     .demo-banda select,.demo-banda button{padding:4px 7px;font-size:12px}
     .doc,.barra-celda{display:none}
     #menus{padding:2px 8px;min-height:34px;border-bottom:1px solid var(--borde)}
-    .menu-l{min-width:0;width:calc(100vw - 16px);max-height:70vh;overflow:auto}
-    .cuerpo{flex:1;min-height:0;flex-direction:column}
-    #barra{width:100%;flex:1;min-height:0;border-left:0;display:none}
-    #barra-marco{width:100%}
-    .barra-cab{padding:6px 12px;font-size:14px}
-    .zona-hoja{flex:1;min-height:0}
-    body.vista-rufo.con-barra #barra{display:flex}
-    body.con-barra:not(.vista-rufo) #barra{display:none}
-    body.vista-rufo.con-barra .zona-hoja{display:none}
-    #vistas{display:flex;border-top:1px solid var(--borde);background:#fff;padding-bottom:env(safe-area-inset-bottom,0px)}
-    #vistas button{flex:1;border:0;background:none;padding:9px 0 10px;font-size:13px;font-weight:600;color:var(--gris);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer}
-    #vistas button span{font-size:19px;line-height:1}
-    #vistas button.on{color:var(--noche);box-shadow:0 -3px 0 var(--ambar) inset}
-    #pestanas{min-height:34px;padding:2px 8px}
-    #toast{left:12px;right:12px;bottom:76px;max-width:none}
+    .menu-l{min-width:0;width:min(340px,calc(100vw - 16px));max-height:70vh;overflow:auto}
+    #toast{left:12px;right:12px;bottom:52px;max-width:none}
     #guia{right:12px;left:12px;width:auto;top:56px;max-height:calc(100vh - 150px);overflow:auto}
     #ventana-caja{width:calc(100vw - 16px)!important;height:calc(100vh - 90px)!important}
+  }
+  /* Móvil: Rufo en un cajón que sale por la derecha, encima de la hoja. */
+  @media (max-width:599px){
+    #barra{position:fixed;right:0;top:var(--arriba,84px);bottom:0;width:min(316px,88vw);z-index:35;display:flex;border-left:0;
+      box-shadow:-10px 0 28px rgba(27,38,54,.22);border-radius:14px 0 0 0;overflow:hidden;transform:translateX(105%);transition:transform .28s ease}
+    body.con-barra.cajon-abierto #barra{transform:none}
+    #barra-marco{width:100%}
+    .barra-cab{padding:6px 8px 6px 4px;font-size:14px}
+    #barra-plegar{display:inline-grid;place-items:center;border:0;background:none;font-size:22px;color:var(--gris);width:32px;height:32px;cursor:pointer}
+    #asa{position:fixed;right:0;top:calc(var(--arriba,84px) + 70px);z-index:34;display:none;flex-direction:column;align-items:center;gap:2px;
+      border:0;border-radius:14px 0 0 14px;background:var(--noche);color:#fff;padding:8px 6px 8px 8px;font-size:11px;font-weight:700;box-shadow:-4px 4px 14px rgba(0,0,0,.25);cursor:pointer}
+    #asa svg{width:38px;height:42px}
+    body.con-barra:not(.cajon-abierto) #asa{display:flex}
+    @media (prefers-reduced-motion:reduce){#barra{transition:none}}
   }
 </style>
 </head>
@@ -129,12 +129,12 @@
     <div id="pestanas"></div>
   </div>
   <aside id="barra" aria-label="Barra lateral">
-    <div class="barra-cab"><span id="barra-titulo"></span><button id="barra-cerrar" aria-label="Cerrar barra lateral">✕</button></div>
+    <div class="barra-cab"><button id="barra-plegar" type="button" aria-label="Apartar a Rufo">›</button><span id="barra-titulo" style="flex:1"></span><button id="barra-cerrar" aria-label="Cerrar barra lateral">✕</button></div>
     <iframe id="barra-marco" title="Barra lateral"></iframe>
   </aside>
 </div>
 <div id="ventana" role="dialog" aria-modal="true"><div id="ventana-caja"><div class="ventana-cab"><span id="ventana-titulo"></span><button id="ventana-cerrar" aria-label="Cerrar">✕</button></div><iframe id="ventana-marco" title="Ventana"></iframe></div></div>
-<nav id="vistas" aria-label="Vista"><button id="v-rufo" class="on" type="button"><span>🐾</span>Rufo</button><button id="v-hoja" type="button"><span>📄</span>Hoja</button></nav>
+<button id="asa" type="button" aria-label="Abrir a Rufo"><svg viewBox="8 0 84 92" aria-hidden="true"><use href="#asa-rufo"/></svg>Rufo</button>
 <div id="toast" role="status"></div>
 <div id="guia">
   <button class="cerrar" id="guia-cerrar" aria-label="Cerrar">✕</button>
@@ -153,6 +153,6 @@
 <script src="archivos.js?v=9374570d"></script>
 <script src="motor.js?v=fd2628e1"></script>
 <script src="datos-demo.js?v=6da9087b"></script>
-<script src="app.js?v=5cfbc964"></script>
+<script src="app.js?v=9057df09"></script>
 </body>
 </html>

@@ -180,23 +180,21 @@
     var puente = DEMO.puenteParaPanel(id);
     return /<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, function (m) { return m + puente; }) : puente + html;
   }
-  // Móvil: pestañas Rufo / Hoja.
-  var movil = G.matchMedia ? G.matchMedia('(max-width: 820px)') : { matches: false };
-  function vista(v) {
-    document.body.classList.toggle('vista-rufo', v === 'rufo');
-    $('v-rufo').classList.toggle('on', v === 'rufo'); $('v-hoja').classList.toggle('on', v === 'hoja');
-    if (v === 'hoja') pedirPintar();
-  }
-  $('v-rufo').addEventListener('click', function () { if (!document.body.classList.contains('con-barra')) { try { mRufoRapido(); } catch (e) {} } vista('rufo'); });
-  $('v-hoja').addEventListener('click', function () { vista('hoja'); });
+  // Móvil: Rufo en un cajón a la derecha.
+  var movil = G.matchMedia ? G.matchMedia('(max-width: 599px)') : { matches: false };
+  function cajon(abrir) { document.body.classList.toggle('cajon-abierto', !!abrir); pedirPintar(); }
+  function medirArriba() { var r = $('menus').getBoundingClientRect(); document.documentElement.style.setProperty('--arriba', Math.max(40, Math.round(r.bottom)) + 'px'); }
+  G.addEventListener('resize', medirArriba);
+  $('asa').addEventListener('click', function () { cajon(true); });
+  $('barra-plegar').addEventListener('click', function () { cajon(false); });
   function abrirBarra(html, titulo) {
-    vista('rufo');
+    cajon(true); medirArriba();
     $('barra-titulo').textContent = titulo || '';
     $('barra-marco').srcdoc = preparar(html, 'barra');
     document.body.classList.add('con-barra');
     pedirPintar();
   }
-  function cerrarBarra() { if (movil.matches) vista('hoja'); document.body.classList.remove('con-barra'); $('barra-marco').srcdoc = ''; pedirPintar(); }
+  function cerrarBarra() { cajon(false); document.body.classList.remove('con-barra'); $('barra-marco').srcdoc = ''; pedirPintar(); }
   $('barra-cerrar').addEventListener('click', cerrarBarra);
   function abrirVentana(d) {
     $('ventana-titulo').textContent = d.titulo || '';
@@ -217,7 +215,7 @@
     else if (tipo === 'toast') toast(d.titulo, d.msg, d.seg);
     else if (tipo === 'barra') abrirBarra(d.html, d.titulo);
     else if (tipo === 'ventana') abrirVentana(d);
-    else if (tipo === 'activar') { if (movil.matches) vista('hoja'); verHoja(d.hoja, d.fila, d.col); destello(); }
+    else if (tipo === 'activar') { if (movil.matches) cajon(false); verHoja(d.hoja, d.fila, d.col); destello(); }
   });
   function destello() { var el = $('lienzo').querySelector('.c.sel'); if (el) { el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); } }
 
@@ -246,6 +244,12 @@
     var t0 = performance.now(), n = DEMO.generarDatos();
     console.log('Datos de la demo:', n, Math.round(performance.now() - t0) + ' ms');
     verHoja(ss.getSheetByName('Entradas'));
+    // El dibujo de Rufo para la pestañita del cajón (el mismo del sistema).
+    try {
+      var linea = (obtenerHTMLBase().split('\n').filter(function (l) { return l.indexOf('<g id="rufo-svg">') > -1; })[0] || '').trim();
+      if (linea) document.body.insertAdjacentHTML('beforeend', '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>' + linea.replace('id="rufo-svg"', 'id="asa-rufo"') + '</defs></svg>');
+    } catch (e) { console.warn('asa', e); }
+    medirArriba();
     try { onOpen(); } catch (e) { console.error('onOpen', e); }
     // Lo que en el documento real hace el disparador instalable: abrir a Rufo.
     setTimeout(function () { try { mRufo(); } catch (e) { console.error(e); } }, 200);
