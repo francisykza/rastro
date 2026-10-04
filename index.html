@@ -97,7 +97,7 @@
   }
   /* Móvil: Rufo en un cajón que sale por la derecha, encima de la hoja. */
   @media (max-width:599px){
-    #barra{position:fixed;right:0;top:var(--arriba,84px);bottom:0;width:min(316px,88vw);z-index:35;display:flex;border-left:0;
+    #barra{position:fixed;right:0;top:var(--arriba,84px);bottom:0;width:min(272px,74vw);z-index:35;display:flex;border-left:0;
       box-shadow:-10px 0 28px rgba(27,38,54,.22);border-radius:14px 0 0 0;overflow:hidden;transform:translateX(105%);transition:transform .28s ease}
     body.con-barra.cajon-abierto #barra{transform:none}
     #barra-marco{width:100%}
@@ -107,7 +107,9 @@
       border:0;border-radius:14px 0 0 14px;background:var(--noche);color:#fff;padding:8px 6px 8px 8px;font-size:11px;font-weight:700;box-shadow:-4px 4px 14px rgba(0,0,0,.25);cursor:pointer}
     #asa svg{width:38px;height:42px}
     body.con-barra:not(.cajon-abierto) #asa{display:flex}
-    @media (prefers-reduced-motion:reduce){#barra{transition:none}}
+    #asa.llama{animation:asaLlama 1.2s ease-in-out 4}
+    @keyframes asaLlama{0%,100%{transform:none}50%{transform:translateX(-8px)}}
+    @media (prefers-reduced-motion:reduce){#barra{transition:none}#asa.llama{animation:none}}
   }
 </style>
 </head>
@@ -161,6 +163,6 @@
 <script src="archivos.js?v=9374570d"></script>
 <script src="motor.js?v=fd2628e1"></script>
 <script src="datos-demo.js?v=6da9087b"></script>
-<script src="app.js?v=9057df09"></script>
+<script src="app.js?v=15d3547a"></script>
 </body>
 </html>

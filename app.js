@@ -176,8 +176,20 @@
 
   // ------------------------------------------------------------ barra lateral y ventanas
   DEMO.cerrarMarco = function (id) { if (id === 'barra') cerrarBarra(); else cerrarVentana(); };
+  // Demo: las contraseñas se enseñan (todas son «demo») y en el móvil el panel
+  // se dibuja un poco más pequeño para que se vea más hoja.
+  var AYUDA_CLAVE = '<script>(function(){function marcar(){' +
+    'var w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT),n;while((n=w.nextNode())){if(n.nodeValue.indexOf("pide contraseña")>=0)n.nodeValue=n.nodeValue.replace(/pide contraseña/g,"contraseña: demo");}' +
+    'var ps=document.querySelectorAll("input[type=password]:not([data-demo])");' +
+    'for(var i=0;i<ps.length;i++){var p=ps[i];p.setAttribute("data-demo","1");p.removeAttribute("inputmode");p.placeholder="demo";' +
+    'var a=document.createElement("div");a.className="demo-clave";a.textContent="🔑 En la demo, la contraseña es «demo»";' +
+    'a.style.cssText="margin:6px 0 2px;font-size:12px;font-weight:600;color:#92400e;background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:5px 8px;text-align:center";' +
+    'if(p.parentNode)p.parentNode.insertBefore(a,p.nextSibling);}}' +
+    'var t=0;document.addEventListener("DOMContentLoaded",function(){marcar();new MutationObserver(function(){if(t)return;t=setTimeout(function(){t=0;marcar();},250);}).observe(document.body,{childList:true,subtree:true});});})();<\/script>';
   function preparar(html, id) {
-    var puente = DEMO.puenteParaPanel(id);
+    var puente = DEMO.puenteParaPanel(id) + AYUDA_CLAVE;
+    if (id === 'barra' && movil.matches) puente += '<style>html{zoom:.86}</style>';
+    html = html.replace(/pide contraseña/g, 'contraseña: demo');
     return /<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, function (m) { return m + puente; }) : puente + html;
   }
   // Móvil: Rufo en un cajón a la derecha.
@@ -187,8 +199,14 @@
   G.addEventListener('resize', medirArriba);
   $('asa').addEventListener('click', function () { cajon(true); });
   $('barra-plegar').addEventListener('click', function () { cajon(false); });
+  // En el móvil, al cargar la demo Rufo espera plegado (se ve la hoja entera);
+  // tocar la hoja lo vuelve a apartar.
+  var primeraBarra = true;
+  $('rejilla').addEventListener('pointerdown', function () { if (movil.matches && document.body.classList.contains('cajon-abierto')) cajon(false); });
   function abrirBarra(html, titulo) {
-    cajon(true); medirArriba();
+    if (movil.matches && primeraBarra) { cajon(false); $('asa').classList.add('llama'); setTimeout(function () { $('asa').classList.remove('llama'); }, 6000); }
+    else cajon(true);
+    primeraBarra = false; medirArriba();
     $('barra-titulo').textContent = titulo || '';
     $('barra-marco').srcdoc = preparar(html, 'barra');
     document.body.classList.add('con-barra');
